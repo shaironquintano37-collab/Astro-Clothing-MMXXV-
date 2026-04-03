@@ -154,13 +154,18 @@ export default function AdminDashboard({ isOpen, onClose }: AdminDashboardProps)
     }
     try {
       const prodId = editingProduct.id || Math.random().toString(36).substring(2, 9);
-      const productToSave = {
+      const productToSave: any = {
         ...editingProduct,
         id: prodId,
         description: editingProduct.description || '',
         sizes: editingProduct.sizes || [],
         colors: editingProduct.colors || []
       };
+      
+      if (!productToSave.backImage) {
+        delete productToSave.backImage;
+      }
+      
       await setDoc(doc(db, 'products', prodId), productToSave);
       setEditingProduct(null);
       fetchProducts();
@@ -202,8 +207,13 @@ export default function AdminDashboard({ isOpen, onClose }: AdminDashboardProps)
     try {
       await updateDoc(doc(db, 'orders', orderId), { status });
       fetchOrders();
-    } catch (error) {
-      handleFirestoreError(error, OperationType.UPDATE, 'orders');
+      showNotification(`Estado da encomenda atualizado para ${status}`, 'success');
+    } catch (error: any) {
+      console.error("Error updating order:", error);
+      showNotification("Erro ao atualizar o estado da encomenda.", "error");
+      try {
+        handleFirestoreError(error, OperationType.UPDATE, 'orders');
+      } catch (e) {}
     }
   };
 
@@ -362,8 +372,33 @@ export default function AdminDashboard({ isOpen, onClose }: AdminDashboardProps)
                       </label>
                     </div>
                     {editingProduct.image && (
-                      <div className="mt-4 w-32 h-32 border border-black/10 dark:border-white/10 overflow-hidden">
+                      <div className="mt-4 w-32 h-32 border border-black/10 dark:border-white/10 overflow-hidden relative group">
                         <img src={editingProduct.image} alt="Preview" className="w-full h-full object-cover" />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block text-xs uppercase tracking-widest mb-2">Back Image (Optional)</label>
+                    <div className="flex gap-2">
+                      <input 
+                        type="text" 
+                        value={editingProduct.backImage || ''}
+                        onChange={e => setEditingProduct({...editingProduct, backImage: e.target.value})}
+                        placeholder="https://..."
+                        className="flex-1 p-3 bg-transparent border border-black/20 dark:border-white/20"
+                      />
+                    </div>
+                    {editingProduct.backImage && (
+                      <div className="mt-4 w-32 h-32 border border-black/10 dark:border-white/10 overflow-hidden relative group">
+                        <img src={editingProduct.backImage} alt="Back Preview" className="w-full h-full object-cover" />
+                        <button 
+                          onClick={() => setEditingProduct({...editingProduct, backImage: ''})}
+                          className="absolute top-1 right-1 bg-red-500 text-white p-1.5 rounded-full shadow-md hover:bg-red-600 transition-colors"
+                          title="Eliminar imagem"
+                        >
+                          <X size={14} />
+                        </button>
                       </div>
                     )}
                   </div>

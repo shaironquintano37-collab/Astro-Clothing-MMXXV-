@@ -21,7 +21,7 @@ import { handleFirestoreError, OperationType } from './utils/firestoreErrorHandl
 
 export default function App() {
   const [isDark, setIsDark] = useState(false);
-  const [products, setProducts] = useState<Product[]>(PRODUCTS);
+  const [products, setProducts] = useState<Product[]>([]);
   const [settings, setSettings] = useState({
     heroTitle: 'BORN TO SHINE',
     heroSubtitle: 'Astro Clothing. Premium streetwear for the urban explorer.',
@@ -61,6 +61,7 @@ export default function App() {
         setProducts(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Product)));
       } else {
         // Seed products if empty
+        setProducts(PRODUCTS); // Show default products immediately
         PRODUCTS.forEach(async (p) => {
           try {
             await setDoc(doc(db, 'products', p.id), p);
