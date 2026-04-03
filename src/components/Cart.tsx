@@ -4,6 +4,8 @@ import { CartItem } from '../types';
 import { useState } from 'react';
 import { SOCIAL_LINKS, DISCOUNT_CODES } from '../constants';
 import { jsPDF } from 'jspdf';
+import { db, auth } from '../firebase';
+import { collection, addDoc } from 'firebase/firestore';
 
 interface CartProps {
   isOpen: boolean;
@@ -140,10 +142,36 @@ export default function Cart({ isOpen, onClose, items, onUpdateQuantity, onRemov
     }, 2000);
   };
 
-  const handleWhatsAppOrder = () => {
+  const handleWhatsAppOrder = async () => {
     const doc = createPDFDoc();
     const fileName = `ASTRO_Order_${orderId}.pdf`;
     
+    // Save order to Firestore
+    try {
+      const user = auth.currentUser;
+      const orderItems = items.map(item => ({
+        id: item.id,
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+        selectedSize: item.selectedSize,
+        selectedColor: item.selectedColor
+      }));
+      
+      await addDoc(collection(db, 'orders'), {
+        id: orderId,
+        userId: user ? user.uid : 'anonymous',
+        customerName: user && user.displayName ? user.displayName : 'Anonymous',
+        customerPhone: '',
+        items: JSON.stringify(orderItems),
+        total: total,
+        status: 'pending',
+        createdAt: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("Error saving order to Firestore:", error);
+    }
+
     // O WhatsApp não permite anexar ficheiros automaticamente através de um link web.
     // A solução é fazer o download do PDF e abrir o WhatsApp com as instruções para o cliente anexar.
     const text = `Hi ASTRO! I'm reaching out to confirm my order (#${orderId}).\n\nI will attach the Order PDF that was just downloaded to my device, along with the PDF of my payment proof.`;
@@ -325,6 +353,16 @@ export default function Cart({ isOpen, onClose, items, onUpdateQuantity, onRemov
 
                     <div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200 text-[10px] uppercase tracking-widest font-bold border border-yellow-200 dark:border-yellow-800/30 text-center">
                       Atenção: Não aceitamos pagamentos automáticos no site.
+                    </div>
+
+                    <div className="bg-gray-50 dark:bg-zinc-900 p-4 border border-black/10 dark:border-white/10">
+                      <h4 className="text-[10px] uppercase tracking-widest font-bold mb-3 opacity-70">Meios de Pagamento</h4>
+                      <div className="space-y-2 text-xs font-mono">
+                        <div className="flex justify-between"><span>M-Pesa:</span> <span className="font-bold">840223559</span></div>
+                        <div className="flex justify-between"><span>e-Mola:</span> <span className="font-bold">867845132</span></div>
+                        <div className="flex justify-between"><span>mKesh:</span> <span className="font-bold">835111449</span></div>
+                        <div className="flex justify-between"><span>BCI:</span> <span className="font-bold">18882999810001</span></div>
+                      </div>
                     </div>
                   </div>
                 </div>

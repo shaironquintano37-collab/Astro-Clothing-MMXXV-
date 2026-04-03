@@ -1,6 +1,10 @@
 import { motion } from 'motion/react';
 
-export default function About() {
+interface AboutProps {
+  text?: string;
+}
+
+export default function About({ text = "We believe streetwear is more than just clothing. It's a futuristic uniform for the modern creator. Every piece is crafted with high-contrast aesthetics to reflect the duality of light and shadow." }: AboutProps) {
   return (
     <section id="about" className="py-32 px-6">
       <div className="max-w-4xl mx-auto text-center">
@@ -15,8 +19,8 @@ export default function About() {
             ASTRO is about energy, mindset, and standing out without noise.
           </p>
           <div className="w-24 h-[1px] bg-black dark:bg-white mx-auto mb-12" />
-          <p className="text-sm uppercase tracking-widest leading-loose opacity-60 max-w-2xl mx-auto">
-            We believe streetwear is more than just clothing. It's a futuristic uniform for the modern creator. Every piece is crafted with high-contrast aesthetics to reflect the duality of light and shadow.
+          <p className="text-sm uppercase tracking-widest leading-loose opacity-60 max-w-2xl mx-auto whitespace-pre-line">
+            {text}
           </p>
         </motion.div>
       </div>

@@ -1,7 +1,8 @@
 import { motion } from 'motion/react';
-import { ShoppingBag, Menu, X, Moon, Sun, Instagram, MessageCircle } from 'lucide-react';
+import { ShoppingBag, Menu, X, Moon, Sun, Instagram, MessageCircle, LogIn, LogOut, User as UserIcon } from 'lucide-react';
 import { useState } from 'react';
 import { SOCIAL_LINKS } from '../constants';
+import { User } from 'firebase/auth';
 
 interface NavbarProps {
   isDark: boolean;
@@ -9,9 +10,14 @@ interface NavbarProps {
   cartCount: number;
   onCartClick: () => void;
   onLoyaltyClick: () => void;
+  user: User | null;
+  onLogin: () => void;
+  onLogout: () => void;
+  isAdmin?: boolean;
+  onAdminClick?: () => void;
 }
 
-export default function Navbar({ isDark, toggleDark, cartCount, onCartClick, onLoyaltyClick }: NavbarProps) {
+export default function Navbar({ isDark, toggleDark, cartCount, onCartClick, onLoyaltyClick, user, onLogin, onLogout, isAdmin, onAdminClick }: NavbarProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   const navLinks = [
@@ -50,8 +56,29 @@ export default function Navbar({ isDark, toggleDark, cartCount, onCartClick, onL
           >
             Fidelidade
           </button>
+          
           <div className="flex items-center space-x-4 border-l border-black/10 dark:border-white/10 pl-8">
-            <a href={SOCIAL_LINKS.instagram} target="_blank" rel="noopener noreferrer" className="hover:opacity-50 transition-opacity">
+            {user ? (
+              <div className="flex items-center gap-4">
+                <span className="text-xs uppercase tracking-widest opacity-70 flex items-center gap-2">
+                  {user.photoURL ? (
+                    <img src={user.photoURL} alt="Profile" className="w-5 h-5 rounded-full" referrerPolicy="no-referrer" />
+                  ) : (
+                    <UserIcon size={16} />
+                  )}
+                  {user.displayName?.split(' ')[0] || 'User'}
+                </span>
+                <button onClick={onLogout} className="hover:opacity-50 transition-opacity" title="Logout">
+                  <LogOut size={18} />
+                </button>
+              </div>
+            ) : (
+              <button onClick={onLogin} className="text-sm uppercase tracking-widest hover:opacity-50 transition-opacity flex items-center gap-2">
+                <LogIn size={18} />
+                Login
+              </button>
+            )}
+            <a href={SOCIAL_LINKS.instagram} target="_blank" rel="noopener noreferrer" className="hover:opacity-50 transition-opacity ml-4">
               <Instagram size={18} />
             </a>
             <a href={SOCIAL_LINKS.whatsapp} target="_blank" rel="noopener noreferrer" className="hover:opacity-50 transition-opacity">
@@ -68,6 +95,15 @@ export default function Navbar({ isDark, toggleDark, cartCount, onCartClick, onL
           >
             {isDark ? <Sun size={20} /> : <Moon size={20} />}
           </button>
+
+          {isAdmin && onAdminClick && (
+            <button 
+              onClick={onAdminClick}
+              className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-colors text-xs font-bold uppercase tracking-widest"
+            >
+              Admin
+            </button>
+          )}
           
           <button 
             onClick={onCartClick}
@@ -90,13 +126,41 @@ export default function Navbar({ isDark, toggleDark, cartCount, onCartClick, onL
         </div>
       </div>
 
-        {/* Mobile Menu */}
+      {/* Mobile Menu */}
       {isOpen && (
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           className="md:hidden absolute top-20 left-0 w-full bg-white dark:bg-black border-b border-black/5 dark:border-white/5 px-6 py-10 flex flex-col space-y-6"
         >
+          {user ? (
+            <div className="flex items-center justify-between border-b border-black/10 dark:border-white/10 pb-6">
+              <div className="flex items-center gap-3">
+                {user.photoURL ? (
+                  <img src={user.photoURL} alt="Profile" className="w-10 h-10 rounded-full" referrerPolicy="no-referrer" />
+                ) : (
+                  <div className="w-10 h-10 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center">
+                    <UserIcon size={20} />
+                  </div>
+                )}
+                <span className="text-lg font-display font-bold uppercase tracking-tighter">
+                  {user.displayName || 'User'}
+                </span>
+              </div>
+              <button onClick={() => { onLogout(); setIsOpen(false); }} className="p-2 bg-black/5 dark:bg-white/5 rounded-full">
+                <LogOut size={20} />
+              </button>
+            </div>
+          ) : (
+            <button 
+              onClick={() => { onLogin(); setIsOpen(false); }}
+              className="flex items-center gap-3 text-2xl font-display font-bold uppercase tracking-tighter text-left border-b border-black/10 dark:border-white/10 pb-6"
+            >
+              <LogIn size={24} />
+              Login / Registo
+            </button>
+          )}
+
           {navLinks.map((link) => (
             <a 
               key={link.name}

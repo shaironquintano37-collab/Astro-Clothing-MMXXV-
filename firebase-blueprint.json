@@ -1,0 +1,80 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "A user of the application, storing loyalty information.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Firebase Auth UID" },
+        "email": { "type": "string", "description": "User's email address" },
+        "displayName": { "type": "string", "description": "User's display name" },
+        "purchasesCount": { "type": "number", "description": "Number of purchases made for loyalty tracking" },
+        "role": { "type": "string", "enum": ["user", "admin"], "description": "User role" }
+      },
+      "required": ["uid", "email", "purchasesCount", "role"]
+    },
+    "Product": {
+      "title": "Product",
+      "description": "A product available in the store.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "price": { "type": "number" },
+        "category": { "type": "string" },
+        "image": { "type": "string" },
+        "description": { "type": "string" },
+        "sizes": { "type": "array", "items": { "type": "string" } },
+        "colors": { "type": "array", "items": { "type": "string" } },
+        "backImage": { "type": "string" },
+        "additionalImages": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["id", "name", "price", "category", "image", "description"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "A customer order.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "items": { "type": "string", "description": "JSON stringified array of cart items" },
+        "total": { "type": "number" },
+        "status": { "type": "string", "enum": ["pending", "completed", "cancelled"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "customerName": { "type": "string" },
+        "customerPhone": { "type": "string" }
+      },
+      "required": ["id", "items", "total", "status", "createdAt"]
+    },
+    "SiteSettings": {
+      "title": "SiteSettings",
+      "description": "Global settings for the website.",
+      "type": "object",
+      "properties": {
+        "heroTitle": { "type": "string" },
+        "heroSubtitle": { "type": "string" },
+        "aboutText": { "type": "string" }
+      },
+      "required": ["heroTitle", "heroSubtitle", "aboutText"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": "User",
+      "description": "Stores user profiles and loyalty data."
+    },
+    "products/{productId}": {
+      "schema": "Product",
+      "description": "Stores all products."
+    },
+    "orders/{orderId}": {
+      "schema": "Order",
+      "description": "Stores all customer orders."
+    },
+    "settings/{settingId}": {
+      "schema": "SiteSettings",
+      "description": "Stores site settings."
+    }
+  }
+}

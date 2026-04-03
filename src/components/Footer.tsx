@@ -19,9 +19,10 @@ const TiktokIcon = ({ size = 24 }: { size?: number }) => (
 
 interface FooterProps {
   onAdminClick: () => void;
+  isAdmin?: boolean;
 }
 
-export default function Footer({ onAdminClick }: FooterProps) {
+export default function Footer({ onAdminClick, isAdmin = false }: FooterProps) {
   return (
     <footer id="footer" className="py-20 px-6 border-t border-black/5 dark:border-white/5">
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-12 items-start">
@@ -37,7 +38,9 @@ export default function Footer({ onAdminClick }: FooterProps) {
           <a href="#shop" className="text-[10px] uppercase tracking-widest hover:opacity-50 transition-opacity">Shop All</a>
           <a href="#about" className="text-[10px] uppercase tracking-widest hover:opacity-50 transition-opacity">Our Story</a>
           <a href="#contact" className="text-[10px] uppercase tracking-widest hover:opacity-50 transition-opacity">Contact</a>
-          <a href="#" onClick={(e) => { e.preventDefault(); onAdminClick(); }} className="text-[10px] uppercase tracking-widest hover:opacity-50 transition-opacity">Admin Access</a>
+          {isAdmin && (
+            <a href="#" onClick={(e) => { e.preventDefault(); onAdminClick(); }} className="text-[10px] uppercase tracking-widest hover:opacity-50 transition-opacity text-blue-500">Admin Access</a>
+          )}
         </div>
 
         <div>

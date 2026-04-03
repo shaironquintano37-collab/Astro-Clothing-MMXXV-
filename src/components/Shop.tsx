@@ -16,6 +16,8 @@ export default function Shop({ products, onProductClick }: ShopProps) {
     ? products 
     : products.filter(p => p.category === activeCategory);
 
+  const sections = ['Hoodies', 'T-Shirts', 'Hats', 'Accessories'];
+
   return (
     <section id="shop" className="py-24 px-6 max-w-7xl mx-auto">
       <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-8">
@@ -42,20 +44,49 @@ export default function Shop({ products, onProductClick }: ShopProps) {
         </div>
       </div>
 
-      <motion.div 
-        layout
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-12"
-      >
-        <AnimatePresence mode="popLayout">
-          {filteredProducts.map((product) => (
-            <ProductCard 
-              key={product.id} 
-              product={product} 
-              onClick={onProductClick}
-            />
-          ))}
-        </AnimatePresence>
-      </motion.div>
+      {activeCategory === 'All' ? (
+        <div className="space-y-24">
+          {sections.map(section => {
+            const sectionProducts = products.filter(p => p.category === section || (section === 'T-Shirts' && p.category === 'Cropped Tops'));
+            if (sectionProducts.length === 0) return null;
+            
+            return (
+              <div key={section}>
+                <h3 className="text-2xl font-display font-bold uppercase tracking-widest mb-8 border-b border-black/10 dark:border-white/10 pb-4">{section}</h3>
+                <motion.div 
+                  layout
+                  className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-12"
+                >
+                  <AnimatePresence mode="popLayout">
+                    {sectionProducts.map((product) => (
+                      <ProductCard 
+                        key={product.id} 
+                        product={product} 
+                        onClick={onProductClick}
+                      />
+                    ))}
+                  </AnimatePresence>
+                </motion.div>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <motion.div 
+          layout
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-12"
+        >
+          <AnimatePresence mode="popLayout">
+            {filteredProducts.map((product) => (
+              <ProductCard 
+                key={product.id} 
+                product={product} 
+                onClick={onProductClick}
+              />
+            ))}
+          </AnimatePresence>
+        </motion.div>
+      )}
     </section>
   );
 }

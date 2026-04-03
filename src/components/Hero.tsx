@@ -2,7 +2,12 @@ import { motion } from 'motion/react';
 import { SOCIAL_LINKS } from '../constants';
 import { Instagram, MessageCircle } from 'lucide-react';
 
-export default function Hero() {
+interface HeroProps {
+  title?: string;
+  subtitle?: string;
+}
+
+export default function Hero({ title = 'BORN 2\nSHINE', subtitle = '' }: HeroProps) {
   return (
     <section className="relative h-screen w-full flex flex-col items-center justify-center overflow-hidden">
       {/* Background Decor */}
@@ -15,10 +20,21 @@ export default function Hero() {
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-          className="slogan-text text-7xl md:text-[12rem] leading-none mb-12"
+          className="slogan-text text-7xl md:text-[12rem] leading-none mb-6 whitespace-pre-line"
         >
-          BORN 2<br />SHINE
+          {title}
         </motion.h1>
+
+        {subtitle && (
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4, duration: 1 }}
+            className="text-lg md:text-xl font-mono mb-12 opacity-80 max-w-2xl mx-auto"
+          >
+            {subtitle}
+          </motion.p>
+        )}
 
         <motion.div
           initial={{ opacity: 0 }}
