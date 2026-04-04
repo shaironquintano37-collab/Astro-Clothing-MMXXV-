@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { X, Plus, Trash2, Edit2, Save, Image as ImageIcon } from 'lucide-react';
 import { db, storage } from '../firebase';
-import { collection, getDocs, doc, setDoc, deleteDoc, updateDoc } from 'firebase/firestore';
+import { collection, getDocs, getDoc, doc, setDoc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { Product } from '../types';
 import { handleFirestoreError, OperationType } from '../utils/firestoreErrorHandler';
@@ -205,7 +205,37 @@ export default function AdminDashboard({ isOpen, onClose }: AdminDashboardProps)
 
   const handleUpdateOrderStatus = async (orderId: string, status: string) => {
     try {
-      await updateDoc(doc(db, 'orders', orderId), { status });
+      const orderRef = doc(db, 'orders', orderId);
+      const orderSnap = await getDoc(orderRef);
+      
+      if (orderSnap.exists()) {
+        const orderData = orderSnap.data();
+        const previousStatus = orderData.status;
+        
+        await updateDoc(orderRef, { status });
+        
+        // Handle loyalty card stars (purchasesCount)
+        if (status === 'completed' && previousStatus !== 'completed') {
+          if (orderData.userId && orderData.userId !== 'anonymous') {
+            const userRef = doc(db, 'users', orderData.userId);
+            const userSnap = await getDoc(userRef);
+            if (userSnap.exists()) {
+              const currentPurchases = userSnap.data().purchasesCount || 0;
+              await updateDoc(userRef, { purchasesCount: currentPurchases + 1 });
+            }
+          }
+        } else if (previousStatus === 'completed' && status !== 'completed') {
+          if (orderData.userId && orderData.userId !== 'anonymous') {
+            const userRef = doc(db, 'users', orderData.userId);
+            const userSnap = await getDoc(userRef);
+            if (userSnap.exists()) {
+              const currentPurchases = userSnap.data().purchasesCount || 0;
+              await updateDoc(userRef, { purchasesCount: Math.max(0, currentPurchases - 1) });
+            }
+          }
+        }
+      }
+
       fetchOrders();
       showNotification(`Estado da encomenda atualizado para ${status}`, 'success');
     } catch (error: any) {
@@ -285,7 +315,7 @@ export default function AdminDashboard({ isOpen, onClose }: AdminDashboardProps)
                     <select 
                       value={order.status}
                       onChange={(e) => handleUpdateOrderStatus(order.docId, e.target.value)}
-                      className="p-2 bg-transparent border border-black/20 dark:border-white/20 text-sm uppercase tracking-widest"
+                      className="p-2 bg-transparent border border-black/20 dark:border-white/20 text-sm uppercase tracking-widest [&>option]:bg-white [&>option]:text-black dark:[&>option]:bg-black dark:[&>option]:text-white"
                     >
                       <option value="pending">Pending</option>
                       <option value="completed">Completed</option>
@@ -323,7 +353,7 @@ export default function AdminDashboard({ isOpen, onClose }: AdminDashboardProps)
                       type="text" 
                       value={editingProduct.name}
                       onChange={e => setEditingProduct({...editingProduct, name: e.target.value})}
-                      className="w-full p-3 bg-transparent border border-black/20 dark:border-white/20"
+                      className="w-full p-3 bg-transparent border border-black/20 dark:border-white/20 text-black dark:text-white"
                     />
                   </div>
                   <div>
@@ -332,7 +362,7 @@ export default function AdminDashboard({ isOpen, onClose }: AdminDashboardProps)
                       type="number" 
                       value={editingProduct.price}
                       onChange={e => setEditingProduct({...editingProduct, price: Number(e.target.value)})}
-                      className="w-full p-3 bg-transparent border border-black/20 dark:border-white/20"
+                      className="w-full p-3 bg-transparent border border-black/20 dark:border-white/20 text-black dark:text-white"
                     />
                   </div>
                   <div>
@@ -340,7 +370,7 @@ export default function AdminDashboard({ isOpen, onClose }: AdminDashboardProps)
                     <select 
                       value={editingProduct.category}
                       onChange={e => setEditingProduct({...editingProduct, category: e.target.value as any})}
-                      className="w-full p-3 bg-transparent border border-black/20 dark:border-white/20"
+                      className="w-full p-3 bg-transparent border border-black/20 dark:border-white/20 text-black dark:text-white [&>option]:bg-white [&>option]:text-black dark:[&>option]:bg-black dark:[&>option]:text-white"
                     >
                       <option value="Hoodies">Hoodies</option>
                       <option value="T-Shirts">T-Shirts</option>
@@ -358,7 +388,7 @@ export default function AdminDashboard({ isOpen, onClose }: AdminDashboardProps)
                         value={editingProduct.image}
                         onChange={e => setEditingProduct({...editingProduct, image: e.target.value})}
                         placeholder="https://..."
-                        className="flex-1 p-3 bg-transparent border border-black/20 dark:border-white/20"
+                        className="flex-1 p-3 bg-transparent border border-black/20 dark:border-white/20 text-black dark:text-white"
                       />
                       <label className="cursor-pointer flex items-center justify-center px-4 bg-black dark:bg-white text-white dark:text-black hover:opacity-80 transition-opacity">
                         {uploadingImage ? '...' : <ImageIcon size={20} />}
@@ -386,7 +416,7 @@ export default function AdminDashboard({ isOpen, onClose }: AdminDashboardProps)
                         value={editingProduct.backImage || ''}
                         onChange={e => setEditingProduct({...editingProduct, backImage: e.target.value})}
                         placeholder="https://..."
-                        className="flex-1 p-3 bg-transparent border border-black/20 dark:border-white/20"
+                        className="flex-1 p-3 bg-transparent border border-black/20 dark:border-white/20 text-black dark:text-white"
                       />
                     </div>
                     {editingProduct.backImage && (
@@ -406,7 +436,7 @@ export default function AdminDashboard({ isOpen, onClose }: AdminDashboardProps)
                   <div className="md:col-span-2">
                     <label className="block text-xs uppercase tracking-widest mb-2">Additional Images</label>
                     <div className="flex gap-2 mb-4">
-                      <label className="flex items-center justify-center px-4 py-3 w-full bg-black/5 dark:bg-white/5 border border-black/20 dark:border-white/20 cursor-pointer hover:bg-black/10 dark:hover:bg-white/10 transition-colors text-xs uppercase tracking-widest font-bold">
+                      <label className="flex items-center justify-center px-4 py-3 w-full bg-black/5 dark:bg-white/5 border border-black/20 dark:border-white/20 cursor-pointer hover:bg-black/10 dark:hover:bg-white/10 transition-colors text-xs uppercase tracking-widest font-bold text-black dark:text-white">
                         {uploadingImage ? <span className="animate-spin mr-2">⏳</span> : <Plus size={16} className="mr-2" />}
                         Add Additional Image
                         <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload('additional')} disabled={uploadingImage} />
@@ -438,7 +468,7 @@ export default function AdminDashboard({ isOpen, onClose }: AdminDashboardProps)
                     <textarea 
                       value={editingProduct.description || ''}
                       onChange={e => setEditingProduct({...editingProduct, description: e.target.value})}
-                      className="w-full p-3 bg-transparent border border-black/20 dark:border-white/20 h-24"
+                      className="w-full p-3 bg-transparent border border-black/20 dark:border-white/20 h-24 text-black dark:text-white"
                     />
                   </div>
                   <div>
@@ -447,7 +477,7 @@ export default function AdminDashboard({ isOpen, onClose }: AdminDashboardProps)
                       type="text" 
                       value={editingProduct.sizes?.join(', ') || ''}
                       onChange={e => setEditingProduct({...editingProduct, sizes: e.target.value.split(',').map(s => s.trim())})}
-                      className="w-full p-3 bg-transparent border border-black/20 dark:border-white/20"
+                      className="w-full p-3 bg-transparent border border-black/20 dark:border-white/20 text-black dark:text-white"
                     />
                   </div>
                   <div>
@@ -456,7 +486,7 @@ export default function AdminDashboard({ isOpen, onClose }: AdminDashboardProps)
                       type="text" 
                       value={editingProduct.colors?.join(', ') || ''}
                       onChange={e => setEditingProduct({...editingProduct, colors: e.target.value.split(',').map(c => c.trim())})}
-                      className="w-full p-3 bg-transparent border border-black/20 dark:border-white/20"
+                      className="w-full p-3 bg-transparent border border-black/20 dark:border-white/20 text-black dark:text-white"
                     />
                   </div>
                 </div>
@@ -511,7 +541,7 @@ export default function AdminDashboard({ isOpen, onClose }: AdminDashboardProps)
                   type="text" 
                   value={settings.heroTitle}
                   onChange={e => setSettings({...settings, heroTitle: e.target.value})}
-                  className="w-full p-3 bg-transparent border border-black/20 dark:border-white/20"
+                  className="w-full p-3 bg-transparent border border-black/20 dark:border-white/20 text-black dark:text-white"
                 />
               </div>
               <div>
@@ -519,7 +549,7 @@ export default function AdminDashboard({ isOpen, onClose }: AdminDashboardProps)
                 <textarea 
                   value={settings.heroSubtitle}
                   onChange={e => setSettings({...settings, heroSubtitle: e.target.value})}
-                  className="w-full p-3 bg-transparent border border-black/20 dark:border-white/20 h-24"
+                  className="w-full p-3 bg-transparent border border-black/20 dark:border-white/20 h-24 text-black dark:text-white"
                 />
               </div>
               <div>
@@ -527,7 +557,7 @@ export default function AdminDashboard({ isOpen, onClose }: AdminDashboardProps)
                 <textarea 
                   value={settings.aboutText}
                   onChange={e => setSettings({...settings, aboutText: e.target.value})}
-                  className="w-full p-3 bg-transparent border border-black/20 dark:border-white/20 h-32"
+                  className="w-full p-3 bg-transparent border border-black/20 dark:border-white/20 h-32 text-black dark:text-white"
                 />
               </div>
               <button 

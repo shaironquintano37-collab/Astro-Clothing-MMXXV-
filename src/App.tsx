@@ -20,7 +20,12 @@ import { doc, getDoc, setDoc, updateDoc, onSnapshot, collection, getDocs } from 
 import { handleFirestoreError, OperationType } from './utils/firestoreErrorHandler';
 
 export default function App() {
-  const [isDark, setIsDark] = useState(false);
+  const [isDark, setIsDark] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+    return false;
+  });
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState(true);
   const [settings, setSettings] = useState({
@@ -54,6 +59,17 @@ export default function App() {
       document.documentElement.classList.remove('dark');
     }
   }, [isDark]);
+
+  // Listen for system theme changes
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = (e: MediaQueryListEvent) => {
+      setIsDark(e.matches);
+    };
+    
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
 
   // Fetch initial data
   useEffect(() => {
@@ -117,11 +133,12 @@ export default function App() {
           const userSnap = await getDoc(userRef);
           if (!userSnap.exists()) {
             // Create new user profile
+            const localPurchases = parseInt(localStorage.getItem('astro_loyalty_purchases') || '0', 10);
             await setDoc(userRef, {
               uid: currentUser.uid,
               email: currentUser.email || '',
               displayName: currentUser.displayName || '',
-              purchasesCount: purchasesCount, // migrate local purchases if any
+              purchasesCount: isNaN(localPurchases) ? 0 : localPurchases, // migrate local purchases if any
               role: isDefaultAdmin ? 'admin' : 'user'
             });
           } else {
@@ -136,6 +153,8 @@ export default function App() {
         }
       } else {
         setIsAdmin(false);
+        setPurchasesCount(0);
+        localStorage.removeItem('astro_loyalty_purchases');
       }
     });
 
@@ -192,19 +211,8 @@ export default function App() {
   };
 
   const handleOrderComplete = async () => {
-    const newCount = purchasesCount + 1;
-    setPurchasesCount(newCount);
-    localStorage.setItem('astro_loyalty_purchases', newCount.toString());
-
-    if (user) {
-      try {
-        await updateDoc(doc(db, 'users', user.uid), {
-          purchasesCount: newCount
-        });
-      } catch (error) {
-        console.error("Error updating purchases in Firestore:", error);
-      }
-    }
+    // The loyalty card star (purchasesCount) is now only incremented 
+    // when the admin marks the order as 'completed' in the dashboard.
   };
 
   const addToCart = (product: Product, size?: string, color?: string) => {

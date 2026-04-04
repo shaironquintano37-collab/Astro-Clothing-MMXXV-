@@ -394,7 +394,7 @@ export default function Cart({ isOpen, onClose, items, onUpdateQuantity, onRemov
                             value={discountCode}
                             onChange={(e) => { setDiscountCode(e.target.value); setDiscountError(''); }}
                             placeholder="ENTER CODE"
-                            className="flex-1 p-3 bg-white dark:bg-black border border-black/10 dark:border-white/10 focus:outline-none focus:border-black dark:focus:border-white text-xs uppercase tracking-widest"
+                            className="flex-1 p-3 bg-white dark:bg-black border border-black/10 dark:border-white/10 focus:outline-none focus:border-black dark:focus:border-white text-xs uppercase tracking-widest text-black dark:text-white"
                           />
                           <button 
                             onClick={handleApplyDiscount}

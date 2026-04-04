@@ -107,17 +107,17 @@ export default function ProductModal({ product, onClose, onAddToCart, onUpdatePr
           <div className="w-full md:w-1/2 relative bg-gray-100 dark:bg-zinc-900 flex items-center justify-center overflow-hidden">
             {isEditing && (
               <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center space-y-4 z-20">
-                <label className="cursor-pointer bg-white text-black px-6 py-3 flex items-center space-x-2 text-xs font-bold uppercase tracking-widest hover:scale-105 transition-transform">
+                <label className="cursor-pointer bg-white dark:bg-black text-black dark:text-white px-6 py-3 flex items-center space-x-2 text-xs font-bold uppercase tracking-widest hover:scale-105 transition-transform">
                   <Upload size={16} />
                   <span>Upload Front Photo</span>
                   <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, 'front')} />
                 </label>
-                <label className="cursor-pointer bg-white text-black px-6 py-3 flex items-center space-x-2 text-xs font-bold uppercase tracking-widest hover:scale-105 transition-transform">
+                <label className="cursor-pointer bg-white dark:bg-black text-black dark:text-white px-6 py-3 flex items-center space-x-2 text-xs font-bold uppercase tracking-widest hover:scale-105 transition-transform">
                   <Upload size={16} />
                   <span>Upload Back Photo</span>
                   <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, 'back')} />
                 </label>
-                <label className="cursor-pointer bg-white text-black px-6 py-3 flex items-center space-x-2 text-xs font-bold uppercase tracking-widest hover:scale-105 transition-transform">
+                <label className="cursor-pointer bg-white dark:bg-black text-black dark:text-white px-6 py-3 flex items-center space-x-2 text-xs font-bold uppercase tracking-widest hover:scale-105 transition-transform">
                   <Upload size={16} />
                   <span>Add More Photos</span>
                   <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, 'additional')} />
@@ -183,7 +183,7 @@ export default function ProductModal({ product, onClose, onAddToCart, onUpdatePr
                   type="text"
                   value={product.name}
                   onChange={(e) => onUpdateProduct({ ...product, name: e.target.value })}
-                  className="w-full text-4xl md:text-5xl font-display font-bold tracking-tighter uppercase mb-4 leading-none bg-transparent border-b border-black/20 dark:border-white/20 focus:outline-none focus:border-black dark:focus:border-white"
+                  className="w-full text-4xl md:text-5xl font-display font-bold tracking-tighter uppercase mb-4 leading-none bg-transparent border-b border-black/20 dark:border-white/20 focus:outline-none focus:border-black dark:focus:border-white text-black dark:text-white"
                 />
               ) : (
                 <h2 className="text-4xl md:text-5xl font-display font-bold tracking-tighter uppercase mb-4 leading-none">{product.name}</h2>
@@ -196,7 +196,7 @@ export default function ProductModal({ product, onClose, onAddToCart, onUpdatePr
                     type="number"
                     value={product.price}
                     onChange={(e) => onUpdateProduct({ ...product, price: Number(e.target.value) })}
-                    className="text-2xl font-display font-bold bg-transparent border-b border-black/20 dark:border-white/20 focus:outline-none focus:border-black dark:focus:border-white w-32"
+                    className="text-2xl font-display font-bold bg-transparent border-b border-black/20 dark:border-white/20 focus:outline-none focus:border-black dark:focus:border-white w-32 text-black dark:text-white"
                   />
                 </div>
               ) : (
@@ -207,7 +207,7 @@ export default function ProductModal({ product, onClose, onAddToCart, onUpdatePr
                 <textarea
                   value={product.description}
                   onChange={(e) => onUpdateProduct({ ...product, description: e.target.value })}
-                  className="w-full text-sm uppercase tracking-widest leading-relaxed opacity-60 bg-transparent border border-black/20 dark:border-white/20 p-2 focus:outline-none focus:border-black dark:focus:border-white min-h-[120px]"
+                  className="w-full text-sm uppercase tracking-widest leading-relaxed opacity-60 bg-transparent border border-black/20 dark:border-white/20 p-2 focus:outline-none focus:border-black dark:focus:border-white min-h-[120px] text-black dark:text-white"
                 />
               ) : (
                 <p className="text-sm uppercase tracking-widest leading-relaxed opacity-60">

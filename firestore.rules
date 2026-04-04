@@ -100,12 +100,11 @@ service cloud.firestore {
                     uidUnchanged() &&
                     ((request.resource.data.role == 'user') || isAdmin());
                     
-      // Update: User can update their own profile, but cannot change role or uid.
+      // Update: User can update their own profile, but cannot change role or uid. Admins can update any profile.
       allow update: if isAuthenticated() && 
-                    isOwner(userId) && 
                     isValidUser(request.resource.data) && 
                     uidNotModified() &&
-                    ((request.resource.data.role == resource.data.role) || isAdmin());
+                    ((isOwner(userId) && request.resource.data.role == resource.data.role) || isAdmin());
                     
       allow delete: if isAdmin();
     }
