@@ -9,3 +9,8 @@ export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 export const auth = getAuth(app);
 export const storage = getStorage(app);
 export const googleProvider = new GoogleAuthProvider();
+
+// Force account selection every time the user logs in
+googleProvider.setCustomParameters({
+  prompt: 'select_account'
+});

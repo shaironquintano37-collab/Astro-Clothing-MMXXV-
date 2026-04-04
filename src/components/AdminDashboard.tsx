@@ -57,7 +57,7 @@ export default function AdminDashboard({ isOpen, onClose }: AdminDashboardProps)
   const fetchOrders = async () => {
     try {
       const snapshot = await getDocs(collection(db, 'orders'));
-      const ords = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
+      const ords = snapshot.docs.map(doc => ({ ...doc.data(), docId: doc.id } as any));
       // Sort by date descending
       ords.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       setOrders(ords);
@@ -284,7 +284,7 @@ export default function AdminDashboard({ isOpen, onClose }: AdminDashboardProps)
                   <div className="flex flex-col items-end justify-between">
                     <select 
                       value={order.status}
-                      onChange={(e) => handleUpdateOrderStatus(order.id, e.target.value)}
+                      onChange={(e) => handleUpdateOrderStatus(order.docId, e.target.value)}
                       className="p-2 bg-transparent border border-black/20 dark:border-white/20 text-sm uppercase tracking-widest"
                     >
                       <option value="pending">Pending</option>

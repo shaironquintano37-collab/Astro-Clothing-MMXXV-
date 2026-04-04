@@ -3,13 +3,15 @@ import { motion, AnimatePresence } from 'motion/react';
 import { CATEGORIES } from '../constants';
 import ProductCard from './ProductCard';
 import { Product } from '../types';
+import { Loader2 } from 'lucide-react';
 
 interface ShopProps {
   products: Product[];
   onProductClick: (product: Product) => void;
+  isLoading?: boolean;
 }
 
-export default function Shop({ products, onProductClick }: ShopProps) {
+export default function Shop({ products, onProductClick, isLoading = false }: ShopProps) {
   const [activeCategory, setActiveCategory] = useState('All');
 
   const filteredProducts = activeCategory === 'All' 
@@ -19,7 +21,7 @@ export default function Shop({ products, onProductClick }: ShopProps) {
   const sections = ['Hoodies', 'T-Shirts', 'Hats', 'Accessories'];
 
   return (
-    <section id="shop" className="py-24 px-6 max-w-7xl mx-auto">
+    <section id="shop" className="py-24 px-6 max-w-7xl mx-auto min-h-[60vh]">
       <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-8">
         <div>
           <h2 className="text-4xl font-display font-bold tracking-tighter uppercase mb-2">The Collection</h2>
@@ -44,7 +46,12 @@ export default function Shop({ products, onProductClick }: ShopProps) {
         </div>
       </div>
 
-      {activeCategory === 'All' ? (
+      {isLoading ? (
+        <div className="flex flex-col items-center justify-center py-20 opacity-50">
+          <Loader2 size={48} className="animate-spin mb-4" />
+          <p className="text-xs uppercase tracking-widest font-bold">A carregar produtos...</p>
+        </div>
+      ) : activeCategory === 'All' ? (
         <div className="space-y-24">
           {sections.map(section => {
             const sectionProducts = products.filter(p => p.category === section || (section === 'T-Shirts' && p.category === 'Cropped Tops'));

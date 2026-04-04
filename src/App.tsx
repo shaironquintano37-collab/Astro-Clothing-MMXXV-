@@ -15,13 +15,14 @@ import LoyaltyModal from './components/LoyaltyModal';
 import { Product, CartItem } from './types';
 import { PRODUCTS, SOCIAL_LINKS } from './constants';
 import { auth, db, googleProvider } from './firebase';
-import { signInWithPopup, signOut, onAuthStateChanged, User } from 'firebase/auth';
+import { signInWithPopup, signInWithRedirect, signOut, onAuthStateChanged, User } from 'firebase/auth';
 import { doc, getDoc, setDoc, updateDoc, onSnapshot, collection, getDocs } from 'firebase/firestore';
 import { handleFirestoreError, OperationType } from './utils/firestoreErrorHandler';
 
 export default function App() {
   const [isDark, setIsDark] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
+  const [isLoadingProducts, setIsLoadingProducts] = useState(true);
   const [settings, setSettings] = useState({
     heroTitle: 'BORN TO SHINE',
     heroSubtitle: 'Astro Clothing. Premium streetwear for the urban explorer.',
@@ -70,8 +71,10 @@ export default function App() {
           }
         });
       }
+      setIsLoadingProducts(false);
     }, (error) => {
       console.error("Error fetching products:", error);
+      setIsLoadingProducts(false);
     });
 
     const unsubSettings = onSnapshot(doc(db, 'settings', 'main'), (snapshot) => {
@@ -166,10 +169,14 @@ export default function App() {
       console.log("Login successful:", result.user.email);
     } catch (error: any) {
       console.error("Login error:", error);
-      if (error.code === 'auth/popup-closed-by-user') {
-        setLoginError("A janela de login foi fechada antes de terminar. Por favor, tente novamente e não feche a janela. Se o problema persistir, tente abrir o site num novo separador.");
-      } else if (error.code === 'auth/popup-blocked') {
-        setLoginError("O seu navegador bloqueou a janela de login. Por favor, permita pop-ups para este site.");
+      if (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/popup-blocked') {
+        console.log("Popup blocked or closed, falling back to redirect...");
+        try {
+          await signInWithRedirect(auth, googleProvider);
+        } catch (redirectError: any) {
+          console.error("Redirect login error:", redirectError);
+          setLoginError("Falha ao redirecionar para o login. Tente abrir o site num navegador diferente (Safari/Chrome).");
+        }
       } else {
         setLoginError(error.message || "Falha ao fazer login. Tente novamente.");
       }
@@ -271,7 +278,7 @@ export default function App() {
           transition={{ duration: 1 }}
           viewport={{ once: true }}
         >
-          <Shop products={products} onProductClick={setSelectedProduct} />
+          <Shop products={products} onProductClick={setSelectedProduct} isLoading={isLoadingProducts} />
         </motion.div>
 
         <Featured products={products} />
