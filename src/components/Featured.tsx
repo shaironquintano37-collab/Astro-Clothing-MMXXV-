@@ -56,6 +56,7 @@ export default function Featured({ products }: FeaturedProps) {
                     src={product.image} 
                     alt={product.name}
                     referrerPolicy="no-referrer"
+                    loading="lazy"
                     className="w-full h-full object-cover"
                   />
                 </div>

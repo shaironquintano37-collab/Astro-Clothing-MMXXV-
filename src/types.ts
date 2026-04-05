@@ -1,4 +1,4 @@
-export type Category = 'T-Shirts' | 'Hoodies' | 'Cropped Tops' | 'Shorts' | 'Tote Bags' | 'Hats';
+export type Category = string;
 
 export interface Product {
   id: string;

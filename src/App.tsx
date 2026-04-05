@@ -31,7 +31,8 @@ export default function App() {
   const [settings, setSettings] = useState({
     heroTitle: 'BORN TO SHINE',
     heroSubtitle: 'Astro Clothing. Premium streetwear for the urban explorer.',
-    aboutText: 'ASTRO is more than a clothing brand. It\'s a movement. Born in the streets, designed for the stars.'
+    aboutText: 'ASTRO is more than a clothing brand. It\'s a movement. Born in the streets, designed for the stars.',
+    categories: ['T-Shirts', 'Hoodies', 'Cropped Tops', 'Shorts', 'Tote Bags', 'Hats']
   });
   
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -73,19 +74,23 @@ export default function App() {
 
   // Fetch initial data
   useEffect(() => {
-    const unsubProducts = onSnapshot(collection(db, 'products'), (snapshot) => {
+    const unsubProducts = onSnapshot(collection(db, 'products'), async (snapshot) => {
       if (!snapshot.empty) {
         setProducts(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Product)));
       } else {
-        // Seed products if empty
-        setProducts(PRODUCTS); // Show default products immediately
-        PRODUCTS.forEach(async (p) => {
-          try {
-            await setDoc(doc(db, 'products', p.id), p);
-          } catch (e) {
-            // Ignore permission errors for non-admins during seeding
+        setProducts([]);
+        // Only seed if settings don't exist (first load ever)
+        try {
+          const settingsDoc = await getDoc(doc(db, 'settings', 'main'));
+          if (!settingsDoc.exists()) {
+            setProducts(PRODUCTS);
+            PRODUCTS.forEach(async (p) => {
+              try {
+                await setDoc(doc(db, 'products', p.id), p);
+              } catch (e) {}
+            });
           }
-        });
+        } catch (e) {}
       }
       setIsLoadingProducts(false);
     }, (error) => {
@@ -95,7 +100,13 @@ export default function App() {
 
     const unsubSettings = onSnapshot(doc(db, 'settings', 'main'), (snapshot) => {
       if (snapshot.exists()) {
-        setSettings(snapshot.data() as any);
+        const data = snapshot.data();
+        setSettings({
+          heroTitle: data.heroTitle || 'BORN TO SHINE',
+          heroSubtitle: data.heroSubtitle || 'Astro Clothing. Premium streetwear for the urban explorer.',
+          aboutText: data.aboutText || 'ASTRO is more than a clothing brand. It\'s a movement. Born in the streets, designed for the stars.',
+          categories: data.categories || ['T-Shirts', 'Hoodies', 'Cropped Tops', 'Shorts', 'Tote Bags', 'Hats']
+        });
       } else {
         try {
           setDoc(doc(db, 'settings', 'main'), settings);
@@ -286,7 +297,7 @@ export default function App() {
           transition={{ duration: 1 }}
           viewport={{ once: true }}
         >
-          <Shop products={products} onProductClick={setSelectedProduct} isLoading={isLoadingProducts} />
+          <Shop products={products} categories={settings.categories} onProductClick={setSelectedProduct} isLoading={isLoadingProducts} />
         </motion.div>
 
         <Featured products={products} />
@@ -318,6 +329,7 @@ export default function App() {
           <AdminDashboard 
             isOpen={isAdminDashboardOpen}
             onClose={() => setIsAdminDashboardOpen(false)}
+            categories={settings.categories}
           />
         )}
 

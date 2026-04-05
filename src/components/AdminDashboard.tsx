@@ -10,9 +10,10 @@ import { handleFirestoreError, OperationType } from '../utils/firestoreErrorHand
 interface AdminDashboardProps {
   isOpen: boolean;
   onClose: () => void;
+  categories: string[];
 }
 
-export default function AdminDashboard({ isOpen, onClose }: AdminDashboardProps) {
+export default function AdminDashboard({ isOpen, onClose, categories }: AdminDashboardProps) {
   const [activeTab, setActiveTab] = useState<'orders' | 'products' | 'settings'>('orders');
   
   // Products State
@@ -26,7 +27,8 @@ export default function AdminDashboard({ isOpen, onClose }: AdminDashboardProps)
   const [settings, setSettings] = useState({
     heroTitle: 'BORN TO SHINE',
     heroSubtitle: 'Astro Clothing. Premium streetwear for the urban explorer.',
-    aboutText: 'ASTRO is more than a clothing brand. It\'s a movement. Born in the streets, designed for the stars.'
+    aboutText: 'ASTRO is more than a clothing brand. It\'s a movement. Born in the streets, designed for the stars.',
+    categories: categories || ['T-Shirts', 'Hoodies', 'Cropped Tops', 'Shorts', 'Tote Bags', 'Hats']
   });
 
   const [notification, setNotification] = useState<{message: string, type: 'success' | 'error'} | null>(null);
@@ -71,7 +73,13 @@ export default function AdminDashboard({ isOpen, onClose }: AdminDashboardProps)
       const snapshot = await getDocs(collection(db, 'settings'));
       const mainSettings = snapshot.docs.find(doc => doc.id === 'main');
       if (mainSettings) {
-        setSettings(mainSettings.data() as any);
+        const data = mainSettings.data();
+        setSettings({
+          heroTitle: data.heroTitle || 'BORN TO SHINE',
+          heroSubtitle: data.heroSubtitle || 'Astro Clothing. Premium streetwear for the urban explorer.',
+          aboutText: data.aboutText || 'ASTRO is more than a clothing brand. It\'s a movement. Born in the streets, designed for the stars.',
+          categories: data.categories || categories || ['T-Shirts', 'Hoodies', 'Cropped Tops', 'Shorts', 'Tote Bags', 'Hats']
+        });
       }
     } catch (error) {
       console.error("Error fetching settings:", error);
@@ -335,7 +343,7 @@ export default function AdminDashboard({ isOpen, onClose }: AdminDashboardProps)
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-display font-bold">Produtos</h2>
               <button 
-                onClick={() => setEditingProduct({ id: '', name: '', price: 0, category: 'T-Shirts', image: '', description: '', sizes: ['S', 'M', 'L'], colors: ['Preto', 'Branco'] })}
+                onClick={() => setEditingProduct({ id: '', name: '', price: 0, category: settings.categories[0] || 'T-Shirts', image: '', description: '', sizes: ['S', 'M', 'L'], colors: ['Preto', 'Branco'] })}
                 className="flex items-center gap-2 px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-xs uppercase tracking-widest font-bold"
               >
                 <Plus size={16} /> Add Product
@@ -372,12 +380,9 @@ export default function AdminDashboard({ isOpen, onClose }: AdminDashboardProps)
                       onChange={e => setEditingProduct({...editingProduct, category: e.target.value as any})}
                       className="w-full p-3 bg-transparent border border-black/20 dark:border-white/20 text-black dark:text-white [&>option]:bg-white [&>option]:text-black dark:[&>option]:bg-black dark:[&>option]:text-white"
                     >
-                      <option value="Hoodies">Hoodies</option>
-                      <option value="T-Shirts">T-Shirts</option>
-                      <option value="Cropped Tops">Cropped Tops</option>
-                      <option value="Hats">Hats</option>
-                      <option value="Accessories">Accessories</option>
-                      <option value="Shorts">Shorts</option>
+                      {settings.categories.map(cat => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
                     </select>
                   </div>
                   <div className="md:col-span-2">
@@ -559,6 +564,20 @@ export default function AdminDashboard({ isOpen, onClose }: AdminDashboardProps)
                   onChange={e => setSettings({...settings, aboutText: e.target.value})}
                   className="w-full p-3 bg-transparent border border-black/20 dark:border-white/20 h-32 text-black dark:text-white"
                 />
+              </div>
+              <div>
+                <label className="block text-xs uppercase tracking-widest mb-2">Categorias (separadas por vírgula)</label>
+                <input 
+                  type="text" 
+                  value={settings.categories.join(', ')}
+                  onChange={e => {
+                    const newCategories = e.target.value.split(',').map(c => c.trim()).filter(c => c.length > 0);
+                    setSettings({...settings, categories: newCategories});
+                  }}
+                  placeholder="T-Shirts, Hoodies, Hats..."
+                  className="w-full p-3 bg-transparent border border-black/20 dark:border-white/20 text-black dark:text-white"
+                />
+                <p className="text-xs opacity-50 mt-2">Isto irá atualizar as categorias disponíveis na loja e na criação de produtos.</p>
               </div>
               <button 
                 onClick={handleSaveSettings}

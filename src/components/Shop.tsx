@@ -1,24 +1,24 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { CATEGORIES } from '../constants';
 import ProductCard from './ProductCard';
 import { Product } from '../types';
 import { Loader2 } from 'lucide-react';
 
 interface ShopProps {
   products: Product[];
+  categories: string[];
   onProductClick: (product: Product) => void;
   isLoading?: boolean;
 }
 
-export default function Shop({ products, onProductClick, isLoading = false }: ShopProps) {
+export default function Shop({ products, categories, onProductClick, isLoading = false }: ShopProps) {
   const [activeCategory, setActiveCategory] = useState('All');
 
   const filteredProducts = activeCategory === 'All' 
     ? products 
     : products.filter(p => p.category === activeCategory);
 
-  const sections = ['Hoodies', 'T-Shirts', 'Hats', 'Accessories'];
+  const displayCategories = ['All', ...(categories || [])];
 
   return (
     <section id="shop" className="py-24 px-6 max-w-7xl mx-auto min-h-[60vh]">
@@ -30,17 +30,17 @@ export default function Shop({ products, onProductClick, isLoading = false }: Sh
 
         {/* Filters */}
         <div className="flex flex-wrap gap-4">
-          {CATEGORIES.map((cat) => (
+          {displayCategories.map((cat) => (
             <button
-              key={cat.value}
-              onClick={() => setActiveCategory(cat.value)}
+              key={cat}
+              onClick={() => setActiveCategory(cat)}
               className={`text-[10px] uppercase tracking-[0.2em] px-4 py-2 border transition-all ${
-                activeCategory === cat.value 
+                activeCategory === cat 
                   ? 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white' 
                   : 'border-black/10 dark:border-white/10 hover:border-black dark:hover:border-white'
               }`}
             >
-              {cat.label}
+              {cat}
             </button>
           ))}
         </div>
@@ -53,8 +53,8 @@ export default function Shop({ products, onProductClick, isLoading = false }: Sh
         </div>
       ) : activeCategory === 'All' ? (
         <div className="space-y-24">
-          {sections.map(section => {
-            const sectionProducts = products.filter(p => p.category === section || (section === 'T-Shirts' && p.category === 'Cropped Tops'));
+          {(categories || []).map(section => {
+            const sectionProducts = products.filter(p => p.category === section);
             if (sectionProducts.length === 0) return null;
             
             return (

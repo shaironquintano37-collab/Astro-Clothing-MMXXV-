@@ -87,7 +87,8 @@ service cloud.firestore {
     function isValidSettings(data) {
       return (!('heroTitle' in data) || (data.heroTitle is string && data.heroTitle.size() < 500)) &&
              (!('heroSubtitle' in data) || (data.heroSubtitle is string && data.heroSubtitle.size() < 1000)) &&
-             (!('aboutText' in data) || (data.aboutText is string && data.aboutText.size() < 5000));
+             (!('aboutText' in data) || (data.aboutText is string && data.aboutText.size() < 5000)) &&
+             (!('categories' in data) || (data.categories is list && data.categories.size() < 50));
     }
 
     match /users/{userId} {
