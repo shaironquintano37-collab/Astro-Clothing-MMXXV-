@@ -1,7 +1,7 @@
-import { motion } from 'motion/react';
+import { motion, useInView } from 'motion/react';
 import { Product } from '../types';
 import { Share2, Check, ImageOff } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 
 interface ProductCardProps {
   product: Product;
@@ -13,6 +13,8 @@ export default function ProductCard({ product, onClick }: ProductCardProps) {
   const [copied, setCopied] = useState(false);
   const [imageError, setImageError] = useState(!product.image);
   const [backImageError, setBackImageError] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const isInView = useInView(ref, { once: true, margin: "200px 0px" });
 
   const handleShare = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -43,6 +45,7 @@ export default function ProductCard({ product, onClick }: ProductCardProps) {
 
   return (
     <motion.div 
+      ref={ref}
       layout
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -56,7 +59,7 @@ export default function ProductCard({ product, onClick }: ProductCardProps) {
             <ImageOff size={48} className="mb-2 opacity-50" />
             <span className="text-xs uppercase tracking-widest opacity-50">No Image</span>
           </div>
-        ) : (
+        ) : isInView ? (
           <img 
             src={product.image} 
             alt={product.name}
@@ -65,9 +68,9 @@ export default function ProductCard({ product, onClick }: ProductCardProps) {
             onError={() => setImageError(true)}
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
           />
-        )}
+        ) : null}
         {/* Hover Image */}
-        {!imageError && !backImageError && (product.backImage || (product.additionalImages && product.additionalImages.length > 0)) && (
+        {!imageError && !backImageError && isInView && (product.backImage || (product.additionalImages && product.additionalImages.length > 0)) && (
           <img 
             src={product.backImage || (product.additionalImages && product.additionalImages[0])} 
             alt={`${product.name} alternate view`}
