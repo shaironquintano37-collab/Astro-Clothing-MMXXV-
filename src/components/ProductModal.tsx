@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'motion/react';
-import { X, ShoppingBag, ChevronLeft, ChevronRight, Pencil, Upload } from 'lucide-react';
+import { X, ShoppingBag, ChevronLeft, ChevronRight, Pencil, Upload, ImageOff } from 'lucide-react';
 import { Product } from '../types';
 import React, { useState } from 'react';
 
@@ -16,21 +16,26 @@ export default function ProductModal({ product, onClose, onAddToCart, onUpdatePr
   const [selectedColor, setSelectedColor] = useState('');
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isEditing, setIsEditing] = useState(false);
-
-  if (!product) return null;
-
-  const allImages = [
+  
+  const allImages = product ? [
     product.image,
     ...(product.backImage ? [product.backImage] : []),
     ...(product.additionalImages || [])
-  ];
+  ].filter(Boolean) : [];
+
+  const [imageError, setImageError] = useState(!allImages[0]);
+
+  if (!product) return null;
 
   const handleNextImage = () => {
+    setImageError(!allImages[(currentImageIndex + 1) % allImages.length]);
     setCurrentImageIndex((prev) => (prev + 1) % allImages.length);
   };
 
   const handlePrevImage = () => {
-    setCurrentImageIndex((prev) => (prev - 1 + allImages.length) % allImages.length);
+    const nextIndex = (currentImageIndex - 1 + allImages.length) % allImages.length;
+    setImageError(!allImages[nextIndex]);
+    setCurrentImageIndex(nextIndex);
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, type: 'front' | 'back' | 'additional') => {
@@ -133,15 +138,23 @@ export default function ProductModal({ product, onClose, onAddToCart, onUpdatePr
                 )}
               </div>
             )}
-            <motion.img 
-              key={currentImageIndex}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              src={allImages[currentImageIndex]} 
-              alt={product.name}
-              referrerPolicy="no-referrer"
-              className="w-full h-full object-cover"
-            />
+            {imageError ? (
+              <div className="flex flex-col items-center justify-center text-gray-400 dark:text-gray-600">
+                <ImageOff size={64} className="mb-4 opacity-50" />
+                <span className="text-sm uppercase tracking-widest opacity-50">No Image Available</span>
+              </div>
+            ) : (
+              <motion.img 
+                key={currentImageIndex}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                src={allImages[currentImageIndex]} 
+                alt={product.name}
+                referrerPolicy="no-referrer"
+                onError={() => setImageError(true)}
+                className="w-full h-full object-cover"
+              />
+            )}
             
             {allImages.length > 1 && (
               <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex space-x-4 z-10">

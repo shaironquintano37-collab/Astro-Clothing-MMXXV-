@@ -25,6 +25,7 @@ export default function Cart({ isOpen, onClose, items, onUpdateQuantity, onRemov
   const [appliedDiscount, setAppliedDiscount] = useState<{code: string, type: 'percentage' | 'fixed', value: number} | null>(null);
   const [discountError, setDiscountError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [infoMessage, setInfoMessage] = useState('');
 
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
@@ -133,9 +134,47 @@ export default function Cart({ isOpen, onClose, items, onUpdateQuantity, onRemov
     return doc;
   };
 
-  const handleDownloadPDF = () => {
+  const downloadOrSharePDF = async (doc: jsPDF, fileName: string, shareText?: string) => {
+    const pdfBlob = doc.output('blob');
+    
+    // Check if we are in an in-app browser (like Instagram/Facebook)
+    const ua = navigator.userAgent || navigator.vendor || (window as any).opera;
+    const isInstagram = (ua.indexOf('Instagram') > -1) || (ua.indexOf('FBAN') > -1) || (ua.indexOf('FBAV') > -1);
+
+    if (isInstagram) {
+      // Try Web Share API first (best for mobile/in-app browsers)
+      const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({
+            files: [file],
+            title: 'ASTRO Order',
+            text: shareText || 'Here is my ASTRO order PDF.',
+          });
+          return true; // Success
+        } catch (error) {
+          console.error('Error sharing:', error);
+        }
+      }
+      
+      // Fallback: In-app browsers block blob URLs.
+      // We show a message instructing the user to open in a system browser.
+      setInfoMessage("Se o PDF não baixar, clique nos 3 pontos (⋮) no canto superior direito e escolha 'Abrir no navegador' (Chrome/Safari).");
+      setTimeout(() => setInfoMessage(''), 8000);
+      
+      // Still try to trigger standard download just in case it works
+      doc.save(fileName);
+      return false;
+    } else {
+      // Standard browser download
+      doc.save(fileName);
+      return false;
+    }
+  };
+
+  const handleDownloadPDF = async () => {
     const doc = createPDFDoc();
-    doc.save(`ASTRO_Order_${orderId}.pdf`);
+    await downloadOrSharePDF(doc, `ASTRO_Order_${orderId}.pdf`);
     setSuccessMessage('PDF Downloaded!');
     setTimeout(() => {
       setSuccessMessage('');
@@ -145,8 +184,21 @@ export default function Cart({ isOpen, onClose, items, onUpdateQuantity, onRemov
   const handleWhatsAppOrder = async () => {
     const doc = createPDFDoc();
     const fileName = `ASTRO_Order_${orderId}.pdf`;
+    const text = `Hi ASTRO! I'm reaching out to confirm my order (#${orderId}).\n\nI will attach the Order PDF that was just downloaded to my device, along with the PDF of my payment proof.`;
     
-    // Save order to Firestore
+    // 1. Faz o download automático do PDF para o dispositivo do cliente (com suporte para in-app browsers)
+    // MUST be called before any await to preserve user gesture for window.open and navigator.share
+    const shared = await downloadOrSharePDF(doc, fileName, text);
+
+    // 2. Abre o WhatsApp diretamente no número da loja com a mensagem pré-preenchida
+    // If they used the native share sheet, they might have already shared it to WhatsApp,
+    // but if they didn't, or if we used fallback, we open WhatsApp.
+    if (!shared) {
+      const encodedText = encodeURIComponent(text);
+      window.open(`${SOCIAL_LINKS.whatsapp}?text=${encodedText}`, '_blank');
+    }
+
+    // Save order to Firestore (in background to not block the UI/popups)
     try {
       const user = auth.currentUser;
       const orderItems = items.map(item => ({
@@ -158,7 +210,7 @@ export default function Cart({ isOpen, onClose, items, onUpdateQuantity, onRemov
         selectedColor: item.selectedColor
       }));
       
-      await addDoc(collection(db, 'orders'), {
+      addDoc(collection(db, 'orders'), {
         id: orderId,
         userId: user ? user.uid : 'anonymous',
         customerName: user && user.displayName ? user.displayName : 'Anonymous',
@@ -167,21 +219,12 @@ export default function Cart({ isOpen, onClose, items, onUpdateQuantity, onRemov
         total: total,
         status: 'pending',
         createdAt: new Date().toISOString()
+      }).catch(error => {
+        console.error("Error saving order to Firestore:", error);
       });
     } catch (error) {
-      console.error("Error saving order to Firestore:", error);
+      console.error("Error preparing order for Firestore:", error);
     }
-
-    // O WhatsApp não permite anexar ficheiros automaticamente através de um link web.
-    // A solução é fazer o download do PDF e abrir o WhatsApp com as instruções para o cliente anexar.
-    const text = `Hi ASTRO! I'm reaching out to confirm my order (#${orderId}).\n\nI will attach the Order PDF that was just downloaded to my device, along with the PDF of my payment proof.`;
-
-    // 1. Faz o download automático do PDF para o dispositivo do cliente
-    doc.save(fileName);
-
-    // 2. Abre o WhatsApp diretamente no número da loja com a mensagem pré-preenchida
-    const encodedText = encodeURIComponent(text);
-    window.open(`${SOCIAL_LINKS.whatsapp}?text=${encodedText}`, '_blank');
     
     setSuccessMessage('Order sent successfully!');
     if (onOrderComplete) onOrderComplete();
@@ -229,6 +272,16 @@ export default function Cart({ isOpen, onClose, items, onUpdateQuantity, onRemov
                 >
                   <CheckCircle2 size={16} />
                   <span className="text-[10px] uppercase tracking-widest font-bold">{successMessage}</span>
+                </motion.div>
+              )}
+              {infoMessage && (
+                <motion.div
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  className="absolute top-24 left-1/2 -translate-x-1/2 bg-blue-500 text-white px-6 py-3 shadow-xl flex items-center gap-3 z-[200] rounded-lg text-center max-w-[90%]"
+                >
+                  <span className="text-[10px] uppercase tracking-widest font-bold leading-relaxed">{infoMessage}</span>
                 </motion.div>
               )}
             </AnimatePresence>

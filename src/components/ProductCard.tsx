@@ -1,6 +1,6 @@
 import { motion } from 'motion/react';
 import { Product } from '../types';
-import { Share2, Check } from 'lucide-react';
+import { Share2, Check, ImageOff } from 'lucide-react';
 import React, { useState } from 'react';
 
 interface ProductCardProps {
@@ -11,6 +11,8 @@ interface ProductCardProps {
 
 export default function ProductCard({ product, onClick }: ProductCardProps) {
   const [copied, setCopied] = useState(false);
+  const [imageError, setImageError] = useState(!product.image);
+  const [backImageError, setBackImageError] = useState(false);
 
   const handleShare = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -48,21 +50,30 @@ export default function ProductCard({ product, onClick }: ProductCardProps) {
       className="group cursor-pointer"
       onClick={() => onClick(product)}
     >
-      <div className="relative aspect-[4/5] overflow-hidden bg-gray-100 dark:bg-zinc-900 mb-4">
-        <img 
-          src={product.image} 
-          alt={product.name}
-          referrerPolicy="no-referrer"
-          loading="lazy"
-          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-        />
+      <div className="relative aspect-[4/5] overflow-hidden bg-gray-100 dark:bg-zinc-900 mb-4 flex items-center justify-center">
+        {imageError ? (
+          <div className="flex flex-col items-center justify-center text-gray-400 dark:text-gray-600">
+            <ImageOff size={48} className="mb-2 opacity-50" />
+            <span className="text-xs uppercase tracking-widest opacity-50">No Image</span>
+          </div>
+        ) : (
+          <img 
+            src={product.image} 
+            alt={product.name}
+            referrerPolicy="no-referrer"
+            loading="lazy"
+            onError={() => setImageError(true)}
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+          />
+        )}
         {/* Hover Image */}
-        {(product.backImage || (product.additionalImages && product.additionalImages.length > 0)) && (
+        {!imageError && !backImageError && (product.backImage || (product.additionalImages && product.additionalImages.length > 0)) && (
           <img 
             src={product.backImage || (product.additionalImages && product.additionalImages[0])} 
             alt={`${product.name} alternate view`}
             referrerPolicy="no-referrer"
             loading="lazy"
+            onError={() => setBackImageError(true)}
             className="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-500 group-hover:opacity-100"
           />
         )}

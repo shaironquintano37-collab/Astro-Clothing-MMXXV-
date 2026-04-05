@@ -51,6 +51,10 @@ export default function Shop({ products, categories, onProductClick, isLoading =
           <Loader2 size={48} className="animate-spin mb-4" />
           <p className="text-xs uppercase tracking-widest font-bold">A carregar produtos...</p>
         </div>
+      ) : products.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 opacity-50">
+          <p className="text-xs uppercase tracking-widest font-bold">Nenhum produto disponível no momento.</p>
+        </div>
       ) : activeCategory === 'All' ? (
         <div className="space-y-24">
           {(categories || []).map(section => {

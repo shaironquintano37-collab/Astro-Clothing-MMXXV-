@@ -1,8 +1,30 @@
 import { motion } from 'motion/react';
 import { ShoppingBag, Menu, X, Moon, Sun, Instagram, MessageCircle, LogIn, LogOut, User as UserIcon } from 'lucide-react';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { SOCIAL_LINKS } from '../constants';
 import { User } from 'firebase/auth';
+
+const Avatar = ({ src, alt, size = 5 }: { src: string | null; alt: string; size?: number }) => {
+  const [error, setError] = useState(false);
+
+  if (!src || error) {
+    return (
+      <div className={`w-${size} h-${size} rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center`}>
+        <UserIcon size={size === 5 ? 16 : 20} />
+      </div>
+    );
+  }
+
+  return (
+    <img 
+      src={src} 
+      alt={alt} 
+      className={`w-${size} h-${size} rounded-full object-cover`} 
+      referrerPolicy="no-referrer" 
+      onError={() => setError(true)}
+    />
+  );
+};
 
 interface NavbarProps {
   isDark: boolean;
@@ -61,11 +83,7 @@ export default function Navbar({ isDark, toggleDark, cartCount, onCartClick, onL
             {user ? (
               <div className="flex items-center gap-4">
                 <span className="text-xs uppercase tracking-widest opacity-70 flex items-center gap-2">
-                  {user.photoURL ? (
-                    <img src={user.photoURL} alt="Profile" className="w-5 h-5 rounded-full" referrerPolicy="no-referrer" />
-                  ) : (
-                    <UserIcon size={16} />
-                  )}
+                  <Avatar src={user.photoURL} alt="Profile" size={5} />
                   {user.displayName?.split(' ')[0] || 'User'}
                 </span>
                 <button onClick={onLogout} className="hover:opacity-50 transition-opacity" title="Logout">
@@ -136,13 +154,7 @@ export default function Navbar({ isDark, toggleDark, cartCount, onCartClick, onL
           {user ? (
             <div className="flex items-center justify-between border-b border-black/10 dark:border-white/10 pb-6">
               <div className="flex items-center gap-3">
-                {user.photoURL ? (
-                  <img src={user.photoURL} alt="Profile" className="w-10 h-10 rounded-full" referrerPolicy="no-referrer" />
-                ) : (
-                  <div className="w-10 h-10 rounded-full bg-black/5 dark:bg-white/5 flex items-center justify-center">
-                    <UserIcon size={20} />
-                  </div>
-                )}
+                <Avatar src={user.photoURL} alt="Profile" size={10} />
                 <span className="text-lg font-display font-bold uppercase tracking-tighter">
                   {user.displayName || 'User'}
                 </span>
